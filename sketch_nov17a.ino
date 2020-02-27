@@ -1,28 +1,21 @@
 #include <Keypad.h>
-
-#include<LiquidCrystal_I2C.h>
-
-#include<EEPROM.h>
-
+#include <LiquidCrystal_I2C.h>
+#include <Wire.h>
+#include <EEPROM.h>
 #include <Servo.h>
 
-Servo myservo;  // create servo object to control a servo
+Servo myservo;                              // create servo object to control a servo
 
-const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
-LiquidCrystal_I2C lcd(0x26, 16, 2);
+LiquidCrystal_I2C lcd(0x26, 16, 2);         // create LCD object to control LCD
+
 
 char password[4];
-
 char initial_password[4],new_password[4];
-
 int i=0;
-
-int relay_pin = 10;
 
 char key_pressed=0;
 
 const byte rows = 4; 
-
 const byte columns = 4; 
 
 char hexaKeys[rows][columns] = {
@@ -37,8 +30,8 @@ char hexaKeys[rows][columns] = {
 
 };
 
-byte rowPins[rows] = {A5, A4, A3, A2}; //connect to the row pinouts of the keypad
-byte colPins[columns] = {7, 8, 9, 10};
+byte rowPins[rows] = {A3, A2, A1, A0};            //connect to the row pinouts of the keypad
+byte colPins[columns] = {10, 9, 8, 7};            //...and the columns
 
 Keypad keypad_key = Keypad( makeKeymap(hexaKeys), rowPins, colPins, rows, columns);
 
@@ -49,24 +42,19 @@ void setup()
 
 {
 
-  myservo.attach(0);  // attaches the servo on pin 9 to the servo object
+  myservo.attach(3);                                // initializes the lock servo on pin 3
 
-  pinMode(relay_pin, OUTPUT);
-
+  lcd.init();                                        //initializes the LCD
+  lcd.backlight();                                
   lcd.begin(16,2);
-
   lcd.print("EGN2020C");
-
   lcd.setCursor(0,1);
-
   lcd.print("Pinpass");
 
   delay(2000);
 
-  lcd.clear();
-
-  lcd.print("Enter Password");
-
+  lcd.clear();          
+  lcd.print("Enter Password");                      // Asks for password
   lcd.setCursor(0,1);
 
   initialpassword();
@@ -74,100 +62,62 @@ void setup()
 }
 
 
-
-
-void loop()
+void loop()                                     // Constantly checks the keypad for inputs
 
 {
-
-  digitalWrite(relay_pin, HIGH);
-
   key_pressed = keypad_key.getKey();
-
+  
   if(key_pressed=='#')
-
     change();
-
+    
   if (key_pressed)
-
   {
-
     password[i++]=key_pressed;
-
     lcd.print(key_pressed);
-
       }
 
-  if(i==4)
+  if(i==4)                                        //When 4 digits are entered...
 
   {
 
     delay(200);
 
     for(int j=0;j<4;j++)
-
       initial_password[j]=EEPROM.read(j);
 
-    if(!(strncmp(password, initial_password,4)))
+    if(!(strncmp(password, initial_password,4))) //Check entered password against real password
 
     {
 
-      lcd.clear();
-
+      lcd.clear();                              //If password correct... 
       lcd.print("Pass Accepted");
-
-      myservo.write(180);
+      myservo.write(180);                       //opens door and displays "Pass Accepted
 
       delay(2000);
-
       lcd.setCursor(0,1);
-
-      lcd.print("Pres # to change");
-
+      lcd.print("Pres # to change");            //Allows for a password change
       delay(2000);
-
       lcd.clear();
-
       lcd.print("Enter Password:");
-
       lcd.setCursor(0,1);
-
+      
       i=0;
-
-
-
 
     }
 
-    else
-
+    else                                        //If password incorrect...
+    
     {
-
-      myservo.write(0);
-
-
-
-
+      myservo.write(0);                          //displays "Wrong password" and keeps door shut
       lcd.clear();
-
       lcd.print("Wrong Password");
-
-      lcd.setCursor(0,1);
-
-      lcd.print("Pres # to Change");
-
       delay(2000);
 
-      lcd.clear();
-
+      lcd.clear();                              //Asks again for password
       lcd.print("Enter Password");
-
       lcd.setCursor(0,1);
 
       i=0;
-
-
-
 
     }
 
@@ -175,16 +125,13 @@ void loop()
 
 }
 
-void change()
+void change()                                   //Logic to change password
 
 {
-
   int j=0;
-
+  
   lcd.clear();
-
   lcd.print("Current Password");
-
   lcd.setCursor(0,1);
 
   while(j<4)
@@ -196,13 +143,8 @@ void change()
     if(key)
 
     {
-
       new_password[j++]=key;
-
       lcd.print(key);
-
-       
-
     }
 
     key=0;
@@ -211,19 +153,13 @@ void change()
 
   delay(500);
 
-
-
-
   if((strncmp(new_password, initial_password, 4)))
 
   {
 
     lcd.clear();
-
     lcd.print("Wrong Password");
-
     lcd.setCursor(0,1);
-
     lcd.print("Try Again");
 
     delay(1000);
@@ -237,9 +173,7 @@ void change()
     j=0;
 
     lcd.clear();
-
     lcd.print("New Password:");
-
     lcd.setCursor(0,1);
 
     while(j<4)
@@ -253,46 +187,33 @@ void change()
       {
 
         initial_password[j]=key;
-
         lcd.print(key);
-
         EEPROM.write(j,key);
 
         j++;
-
-     
 
       }
 
     }
 
     lcd.print("Pass Changed");
-
     delay(1000);
 
   }
 
   lcd.clear();
-
   lcd.print("Enter Password");
-
   lcd.setCursor(0,1);
-
   key_pressed=0;
 
 }
 
+void initialpassword(){                            //Writes the initial password to memory
 
-
-
-void initialpassword(){
-
-  for(int j=0;j<4;j++)
-
+  for(int j=0;j<4;j++)                             //sets the password as, creatively, 1234
     EEPROM.write(j, j+49);
 
   for(int j=0;j<4;j++)
-
     initial_password[j]=EEPROM.read(j);
 
 }
