@@ -42,7 +42,15 @@ void setup()
 
 {
 
+  pinMode(5, OUTPUT);
+  pinMode(6, OUTPUT);                               //Initializes LED
+
+
+  digitalWrite(6, LOW);
+  digitalWrite(5, HIGH);                            //Sets LED red
+  
   myservo.attach(3);                                // initializes the lock servo on pin 3
+  myservo.write(0);
 
   lcd.init();                                        //initializes the LCD
   lcd.backlight();                                
@@ -92,6 +100,8 @@ void loop()                                     // Constantly checks the keypad 
       lcd.clear();                              //If password correct... 
       lcd.print("Pass Accepted");
       myservo.write(180);                       //opens door and displays "Pass Accepted
+      digitalWrite(6, HIGH);
+      digitalWrite(5, LOW);                    //LED turns green
 
       delay(2000);
       lcd.setCursor(0,1);
@@ -109,6 +119,8 @@ void loop()                                     // Constantly checks the keypad 
     
     {
       myservo.write(0);                          //displays "Wrong password" and keeps door shut
+      digitalWrite(6, LOW);                      //LED turns red
+      digitalWrite(5, HIGH); 
       lcd.clear();
       lcd.print("Wrong Password");
       delay(2000);
